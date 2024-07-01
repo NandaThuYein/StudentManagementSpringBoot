@@ -3,7 +3,6 @@ package studentManagement.config.controller;
 import java.util.List;
 import java.util.Optional;
 
-import javax.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
@@ -23,6 +22,8 @@ import studentManagement.config.persistant.dto.CourseRequestDTO;
 import studentManagement.config.persistant.dto.StudentRequestDTO;
 import studentManagement.config.persistant.dto.UserRequestDTO;
 
+import javax.servlet.http.HttpSession;
+
 @Controller
 public class StudentController {
 	
@@ -39,7 +40,7 @@ public class StudentController {
 	}
 	
 	@RequestMapping(value = "/AddStudent",method = RequestMethod.GET)
-	public ModelAndView addStudent(ModelMap model,HttpSession session) {
+	public ModelAndView addStudent(ModelMap model, HttpSession session) {
 		UserRequestDTO res = null;
 		res = (UserRequestDTO) session.getAttribute("res");
 		if(res == null) {

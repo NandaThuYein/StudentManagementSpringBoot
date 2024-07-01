@@ -1,7 +1,5 @@
 package studentManagement.config.controller;
 
-import javax.servlet.http.HttpSession;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
@@ -18,6 +16,8 @@ import studentManagement.config.model.UserBean;
 import studentManagement.config.persistant.dao.UserService;
 import studentManagement.config.persistant.dto.UserRequestDTO;
 
+import javax.servlet.http.HttpSession;
+
 @Controller
 public class LoginController {
 	
@@ -30,7 +30,7 @@ public class LoginController {
 	}
 	
 	@PostMapping("/UserLoginServlet")
-	public String userLogin(@ModelAttribute("bean") UserBean bean,ModelMap model,HttpSession session) {
+	public String userLogin(@ModelAttribute("bean") UserBean bean, ModelMap model, HttpSession session) {
 		if(bean.getUserName().equals("") || bean.getUserPassword().equals("")) {
 			model.addAttribute("error","Field cannot be blank !");
 		}else {

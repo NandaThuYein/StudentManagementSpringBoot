@@ -5,12 +5,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-
+import net.sf.jasperreports.export.SimpleExporterInput;
+import net.sf.jasperreports.export.SimpleOutputStreamExporterOutput;
+import net.sf.jasperreports.export.SimplePdfExporterConfiguration;
+import net.sf.jasperreports.export.SimpleXlsReportConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.util.ResourceUtils;
@@ -27,12 +27,14 @@ import net.sf.jasperreports.engine.JasperPrint;
 import net.sf.jasperreports.engine.JasperReport;
 import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import net.sf.jasperreports.engine.export.JRPdfExporter;
-import net.sf.jasperreports.engine.export.JRPdfExporterParameter;
 import net.sf.jasperreports.engine.export.JRXlsExporter;
-import net.sf.jasperreports.engine.export.JRXlsExporterParameter;
 import studentManagement.config.model.UserBean;
 import studentManagement.config.persistant.dao.UserService;
 import studentManagement.config.persistant.dto.UserRequestDTO;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 
 @Controller
@@ -40,9 +42,12 @@ public class UserController {
 	
 	@Autowired
 	private UserService userService;
+
+	@Autowired
+	private ResourceLoader resourceLoader;
 	
 	@RequestMapping(value = "/SearchUser",method = RequestMethod.GET)
-	public ModelAndView searchUser(ModelMap model,HttpSession session) {
+	public ModelAndView searchUser(ModelMap model, HttpSession session) {
 		
 		UserRequestDTO res = null;
 		res = (UserRequestDTO) session.getAttribute("res");
@@ -238,63 +243,61 @@ public class UserController {
 	
 	
 	@GetMapping("/ExportServlet/{export}")
-	public void exportServlet(@PathVariable String export ,HttpServletRequest request,HttpServletResponse response,HttpSession session) throws IOException {
-//		ServletContext context = request.getServletContext();
-//		String path = context.getRealPath("/UserReport.jrxml");
-		JRBeanCollectionDataSource source = null;
+	public void exportServlet(@PathVariable String export, HttpServletRequest request, HttpServletResponse response, HttpSession session) throws IOException {
+		JRBeanCollectionDataSource source;
 		JasperReport jasperReport;
 		JasperPrint print;
-		
-		List<UserRequestDTO> list = null;
-		
-		UserBean dto = null;
-				dto = (UserBean) session.getAttribute("user");
-		
-		if(dto != null) {
+
+		List<UserRequestDTO> list;
+
+		UserBean dto = (UserBean) session.getAttribute("user");
+
+		if (dto != null) {
 			list = userService.searchUser(dto);
-		}else {
+		} else {
 			list = userService.selectAllUser();
 		}
-		
+
 		session.removeAttribute("user");
-		
+
 		// Parameters for report
-		Map parameters = new HashMap();
+		Map<String, Object> parameters = new HashMap<>();
 		parameters.put("ReportTitle", "User List");
 
 		try {
-		
-		source = new JRBeanCollectionDataSource(list);
-		jasperReport = JasperCompileManager.compileReport(ResourceUtils.getFile("classpath:UserReport.jrxml")
-									.getAbsolutePath());
-		print = JasperFillManager.fillReport(jasperReport, parameters, source);
+			source = new JRBeanCollectionDataSource(list);
+			jasperReport = JasperCompileManager.compileReport(ResourceUtils.getFile("classpath:UserReport.jrxml").getAbsolutePath());
+			print = JasperFillManager.fillReport(jasperReport, parameters, source);
 
-		if (export.equals("excel")) {
-			
-		response.setContentType("application/vnd.ms-excel");
-		response.setHeader("Content-Disposition", "attachment; filename=User.xlsx");
-		
-		// final OutputStream
-		JRXlsExporter exporterXLS = new JRXlsExporter();
-		exporterXLS.setParameter(JRXlsExporterParameter.JASPER_PRINT, print);
-		exporterXLS.setParameter(JRXlsExporterParameter.OUTPUT_STREAM,response.getOutputStream());
-		
-		exporterXLS.exportReport();
-		
-		} else {
+			if ("excel".equals(export)) {
+				response.setContentType("application/vnd.ms-excel");
+				response.setHeader("Content-Disposition", "attachment; filename=User.xlsx");
 
-		response.setContentType("application/pdf");
+				JRXlsExporter exporterXLS = new JRXlsExporter();
+				exporterXLS.setExporterInput(new SimpleExporterInput(print));
+				exporterXLS.setExporterOutput(new SimpleOutputStreamExporterOutput(response.getOutputStream()));
 
-		response.setHeader("Content-Disposition", "attachment; filename=User.pdf");
+				SimpleXlsReportConfiguration configuration = new SimpleXlsReportConfiguration();
+				configuration.setOnePagePerSheet(true);
+				exporterXLS.setConfiguration(configuration);
 
-		JRPdfExporter exporterPdf = new JRPdfExporter();
-		exporterPdf.setParameter(JRPdfExporterParameter.JASPER_PRINT, print);
-		exporterPdf.setParameter(JRPdfExporterParameter.OUTPUT_STREAM,response.getOutputStream());
-		exporterPdf.exportReport();
+				exporterXLS.exportReport();
+			} else if ("pdf".equals(export)) {
+				response.setContentType("application/pdf");
+				response.setHeader("Content-Disposition", "attachment; filename=User.pdf");
 
-		}
+				JRPdfExporter exporterPdf = new JRPdfExporter();
+				exporterPdf.setExporterInput(new SimpleExporterInput(print));
+				exporterPdf.setExporterOutput(new SimpleOutputStreamExporterOutput(response.getOutputStream()));
+
+				SimplePdfExporterConfiguration configuration = new SimplePdfExporterConfiguration();
+				exporterPdf.setConfiguration(configuration);
+
+				exporterPdf.exportReport();
+			}
 		} catch (JRException e) {
-		e.printStackTrace();
+			e.printStackTrace();
+			// Handle exception
 		}
 	}
 }

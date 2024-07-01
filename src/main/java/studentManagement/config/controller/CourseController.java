@@ -2,8 +2,6 @@ package studentManagement.config.controller;
 
 import java.util.List;
 
-import javax.servlet.http.HttpSession;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
@@ -20,6 +18,8 @@ import studentManagement.config.persistant.dao.CourseService;
 import studentManagement.config.persistant.dto.CourseRequestDTO;
 import studentManagement.config.persistant.dto.UserRequestDTO;
 
+import javax.servlet.http.HttpSession;
+
 @Controller
 public class CourseController {
 	
@@ -27,7 +27,7 @@ public class CourseController {
 	CourseService courseService;
 	
 	@RequestMapping(value = "/CourseRegistration",method = RequestMethod.GET)
-	public ModelAndView addCourse(HttpSession session,ModelMap model) {
+	public ModelAndView addCourse(HttpSession session, ModelMap model) {
 		
 		UserRequestDTO res = null;
 		res = (UserRequestDTO) session.getAttribute("res");
